@@ -1,5 +1,5 @@
 const bcrypt = require("bcryptjs");
-const { execute } = require("./connection");
+const { ensureDatabase, execute } = require("./connection");
 const env = require("../config/env");
 
 async function createSchema() {
@@ -39,25 +39,34 @@ async function seedDemoUser() {
   const passwordHash = bcrypt.hashSync(env.seedUser.password, 10);
   const [result] = await execute(
     "INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)",
-    [env.seedUser.name, env.seedUser.email, passwordHash]
+    [env.seedUser.name, env.seedUser.email, passwordHash],
   );
 
   const seedTasks = [
-    ["Revisar presupuesto AWS", "Crear una alerta de costo antes de desplegar.", "completed"],
+    [
+      "Revisar presupuesto AWS",
+      "Crear una alerta de costo antes de desplegar.",
+      "completed",
+    ],
     ["Publicar frontend", "Subir la interfaz a un hosting web.", "pending"],
-    ["Probar health check", "Validar que el backend responda correctamente.", "pending"]
+    [
+      "Probar health check",
+      "Validar que el backend responda correctamente.",
+      "pending",
+    ],
   ];
 
   for (const task of seedTasks) {
     await execute(
       `INSERT INTO tasks (user_id, title, description, status)
        VALUES (?, ?, ?, ?)`,
-      [result.insertId, task[0], task[1], task[2]]
+      [result.insertId, task[0], task[1], task[2]],
     );
   }
 }
 
 async function initDatabase() {
+  await ensureDatabase();
   await createSchema();
   await seedDemoUser();
 }
