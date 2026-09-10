@@ -22,7 +22,9 @@ function isDatabaseConfigured() {
 function getPool() {
   if (!isDatabaseConfigured()) {
     throw new DatabaseUnavailableError(
-      new Error("Faltan las variables DB_HOST, DB_NAME, DB_USER o DB_PASSWORD.")
+      new Error(
+        "Faltan las variables DB_HOST, DB_NAME, DB_USER o DB_PASSWORD.",
+      ),
     );
   }
 
@@ -37,9 +39,7 @@ function getPool() {
       connectionLimit: env.database.connectionLimit,
       queueLimit: 0,
       connectTimeout: 5000,
-      ...(env.database.ssl
-        ? { ssl: { rejectUnauthorized: true } }
-        : {})
+      ...(env.database.ssl ? { ssl: { rejectUnauthorized: true } } : {}),
     });
   }
 
@@ -55,6 +55,14 @@ async function execute(sql, params = []) {
   try {
     return await getPool().execute(sql, params);
   } catch (error) {
+    console.error("DATABASE ERROR:", {
+      message: error.message,
+      code: error.code,
+      errno: error.errno,
+      sqlState: error.sqlState,
+      sqlMessage: error.sqlMessage,
+    });
+
     throw asDatabaseError(error);
   }
 }
@@ -75,5 +83,5 @@ async function checkConnection() {
 module.exports = {
   checkConnection,
   execute,
-  isDatabaseConfigured
+  isDatabaseConfigured,
 };
